@@ -651,6 +651,7 @@ namespace ClassicUO.Assets
     {
         public uint Header;
         public unsafe MapCellsArray Cells;
+        public static int Size = Unsafe.SizeOf<MapBlock>();
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 1)]

@@ -250,7 +250,7 @@ namespace ClassicUO.Game.Map
             int mx = x % 8;
             int my = y % 8;
 
-            if (!blockIndex.MapFile.ReadAt((long)blockIndex.MapAddress, out MapBlock block))
+            if (!blockIndex.MapFile.ReadAt((long)blockIndex.MapAddress, MapBlock.Size, out MapBlock block))
             {
                 lock (MapFileIOLock)
                 {

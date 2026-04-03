@@ -48,11 +48,9 @@ namespace ClassicUO.IO
         public override BinaryReader Reader => _file;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public override unsafe bool ReadAt<T>(long offset, out T obj)
+        public override unsafe bool ReadAt<T>(long offset, int expectedSize, out T obj)
         {
-            int size = Unsafe.SizeOf<T>();
-
-            if ((ulong)offset > (ulong)Length || (ulong)size > (ulong)(Length - offset))
+            if ((ulong)offset > (ulong)Length || (ulong)expectedSize > (ulong)(Length - offset))
             {
                 obj = default;
                 return false;

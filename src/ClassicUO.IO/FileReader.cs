@@ -29,7 +29,7 @@ namespace ClassicUO.IO
 
         public void Seek(long index, SeekOrigin origin) => _position = Reader.BaseStream.Seek(index, origin);
 
-        public virtual bool ReadAt<T>(long offset, out T obj) where T : unmanaged
+        public virtual bool ReadAt<T>(long offset, int expectedSize, out T obj) where T : unmanaged
         {
             Seek(offset, SeekOrigin.Begin);
             obj = Read<T>();

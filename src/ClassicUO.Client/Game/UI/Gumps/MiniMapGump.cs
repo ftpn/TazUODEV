@@ -284,7 +284,7 @@ namespace ClassicUO.Game.UI.Gumps
 
                     staticsZ.Fill(d);
 
-                    if (!indexMap.MapFile.ReadAt((long)indexMap.MapAddress, out MapBlock mblock))
+                    if (!indexMap.MapFile.ReadAt((long)indexMap.MapAddress, MapBlock.Size, out MapBlock mblock))
                     {
                         Log.Error("Failed to read map for mini map gump");
                         return;

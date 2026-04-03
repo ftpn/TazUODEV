@@ -71,7 +71,7 @@ namespace ClassicUO.Game.Map
                     return;
                 }
 
-                if (!im.MapFile.ReadAt((long)im.MapAddress, out MapBlock block))
+                if (!im.MapFile.ReadAt((long)im.MapAddress, MapBlock.Size, out MapBlock block))
                 {
                     //Fallback if readat failed
                     lock (Map.MapFileIOLock)
