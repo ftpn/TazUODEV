@@ -31,123 +31,183 @@
 #endregion
 
 using System;
-using ClassicUO.Utility.Logging;
-using FontStashSharp;
+using System.Collections.Frozen;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
+using ClassicUO.Utility.Logging;
+using FontStashSharp;
 
-namespace ClassicUO.Assets
+namespace ClassicUO.Assets;
+
+/// <summary>
+///     Contains a list of embedded fonts available for use in the application.
+///     Note that this list is not exhaustive and may be expanded in the future.
+/// </summary>
+public static class EmbeddedFontNames
 {
+    public const string ROBOTO = "Roboto-Regular";
+    public const string ROBOTO_BOLD = "Roboto-Bold";
+    public const string ROBOTO_MONO = "Roboto-Mono";
+    public const string NOTO_SANS_2_SYMBOLS = "NotoSansSymbols2-Regular";
+    public const string IBM_PLEX = "ibm-plex";
+    public const string ALAGARD = "alagard";
+    public const string AVADONIAN = "avadonian";
+    public const string KINGTHINGS_EXETER = "Kingthings Exeter";
+    public const string LEAGUE_SPARTAN_BOLD = "LeagueSpartan-Bold";
+    public const string UO_UNICODE = "uo-unicode-1";
+
     /// <summary>
-    /// Contains a list of embedded fonts available for use in the application.
-    /// Note that this list is not exhaustive and may be expanded in the future.
+    /// The names of all embedded fonts
     /// </summary>
-    public static class EmbeddedFontNames
+    public static FrozenSet<string> Names { get; }
+
+    static EmbeddedFontNames()
     {
-        public const string ROBOTO = "Roboto-Regular";
-        public const string NOTO_SANS_2_SYMBOLS = "NotoSansSymbols2-Regular";
-        public const string ROBOTO_MONO = "Roboto-Mono";
-        public const string IBM_PLEX = "ibm-plex";
+        // Effectivley a 'const'; Ideally, this entire class would've been a string enum but alas that cannot be done.
+        Names = typeof(EmbeddedFontNames)
+            .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy)
+            .Where(fi => fi.IsLiteral && !fi.IsInitOnly && fi.FieldType == typeof(string))
+            .Select(fi => (string)fi.GetRawConstantValue())
+            .ToFrozenSet();
     }
 
-    public class TrueTypeLoader
+}
+
+public class TrueTypeLoader
+{
+    public const string EMBEDDED_FONT = EmbeddedFontNames.ROBOTO;
+
+    private readonly Dictionary<string, FontSystem> _fonts = new();
+
+    private TrueTypeLoader()
     {
-        public const string EMBEDDED_FONT = EmbeddedFontNames.ROBOTO;
+    }
 
-        private readonly Dictionary<string, FontSystem> _fonts = new();
+    private static TrueTypeLoader _instance;
+    public static TrueTypeLoader Instance => _instance ??= new TrueTypeLoader();
 
-        private TrueTypeLoader()
+    private readonly FontSystemSettings _fontSysSettings = new()
+    {
+        FontResolutionFactor = 2, KernelWidth = 2, KernelHeight = 2
+    };
+
+    public void Load()
+    {
+        string fontPath = Path.Combine(AppContext.BaseDirectory, "Fonts");
+
+        if (!Directory.Exists(fontPath))
+            Directory.CreateDirectory(fontPath);
+
+        foreach (string ttf in Directory.GetFiles(fontPath, "*.ttf"))
         {
+            var fontSystem = new FontSystem(_fontSysSettings);
+            fontSystem.AddFont(File.ReadAllBytes(ttf));
+
+            _fonts[Path.GetFileNameWithoutExtension(ttf)] = fontSystem;
         }
 
-        private static TrueTypeLoader _instance;
-        public static TrueTypeLoader Instance => _instance ??= new TrueTypeLoader();
+        LoadEmbeddedFonts();
+        LoadSystemFonts();
+    }
 
-        public byte[] ImGuiFont;
-
-        public void Load()
+    /// <summary>
+    /// Loads fonts available on the local system
+    /// </summary>
+    /// <remarks>
+    /// The underlying implementation currently resolves only <em>TTF, TTC</em>, and <em>OTF</em> files
+    /// </remarks>
+    private void LoadSystemFonts()
+    {
+        int totalLoaded = 0;
+        foreach (FontsByFamily fontFamily in FontProvider.GetSystemFonts())
         {
-            var settings = new FontSystemSettings
+            if (_fonts.ContainsKey(fontFamily.FamilyName))
             {
-                FontResolutionFactor = 2,
-                KernelWidth = 2,
-                KernelHeight = 2
-            };
-
-            string fontPath = Path.Combine(AppContext.BaseDirectory, "Fonts");
-
-            if (!Directory.Exists(fontPath))
-                Directory.CreateDirectory(fontPath);
-
-            foreach (string ttf in Directory.GetFiles(fontPath, "*.ttf"))
-            {
-                var fontSystem = new FontSystem(settings);
-                fontSystem.AddFont(File.ReadAllBytes(ttf));
-
-                _fonts[Path.GetFileNameWithoutExtension(ttf)] = fontSystem;
+                Log.Warn($"System font family {fontFamily.FamilyName} appears more than once");
+                continue;
             }
 
-            LoadEmbeddedFonts();
+            if (fontFamily.FontFaces.Length <= 0)
+            {
+                Log.Warn($"Could not find any available fonts for family '{fontFamily.FamilyName}'");
+                continue;
+            }
+
+            int numLoadedInSystem = 0;
+            var fontSystem = new FontSystem(_fontSysSettings);
+            foreach (byte[] font in fontFamily.FontFaces)
+            {
+                try
+                {
+                    fontSystem.AddFont(font);
+                    numLoadedInSystem++;
+                }
+                catch (Exception e)
+                {
+                    Log.Warn($"Failed to load a font binary from family {fontFamily.FamilyName} - {e.Message}");
+                }
+            }
+
+            if (numLoadedInSystem > 0)
+            {
+                _fonts[fontFamily.FamilyName] = fontSystem;
+                totalLoaded += numLoadedInSystem;
+                Log.Debug($"Loaded {numLoadedInSystem} fonts for family '{fontFamily.FamilyName}'");
+            }
+            else
+                Log.Warn($"Could not load any fonts for family '{fontFamily.FamilyName}'. The entire family will be omitted");
         }
 
-        private void LoadEmbeddedFonts()
+        Log.Debug($"Loaded a total of {totalLoaded} system fonts");
+    }
+
+    private void LoadEmbeddedFonts()
+    {
+        var settings = new FontSystemSettings();
+
+        Assembly assembly = GetType().Assembly;
+        string fontAssetFolder = assembly.GetName().Name + ".fonts";
+        // Get all embedded resource names
+        string[] resourceNames = assembly.GetManifestResourceNames()
+            .Where(name => name.StartsWith(fontAssetFolder))
+            .ToArray();
+
+        foreach (string resourceName in resourceNames)
         {
-            var settings = new FontSystemSettings();
-            // {
-            //     FontResolutionFactor = 2,
-            //     KernelWidth = 2,
-            //     KernelHeight = 2
-            // };
+            Stream stream = assembly.GetManifestResourceStream(resourceName);
+            if (stream == null)
+                continue;
 
-            System.Reflection.Assembly assembly = this.GetType().Assembly;
-            string fontAssetFolder = assembly.GetName().Name + ".fonts";
-            // Get all embedded resource names
-            string[] resourceNames = assembly.GetManifestResourceNames()
-                                        .Where(name => name.StartsWith(fontAssetFolder))
-                                        .ToArray();
-
-            foreach (string resourceName in resourceNames)
+            using (stream)
             {
-                Stream stream = assembly.GetManifestResourceStream(resourceName);
-                if (stream != null)
-                    using (stream)
-                    {
-                        string[] rnameParts = resourceName.Split('.');
-                        string fname = rnameParts[rnameParts.Length - 2];
+                string[] rNameParts = resourceName.Split('.');
+                string fName = rNameParts[^2];
 #if DEBUG
-                        Log.Trace($"Loaded embedded font: {fname}");
+                Log.Trace($"Loaded embedded font: {fName}");
 #endif
-                        var memoryStream = new MemoryStream();
-                        stream.CopyTo(memoryStream);
+                var memoryStream = new MemoryStream();
+                stream.CopyTo(memoryStream);
 
-                        byte[] filebytes = memoryStream.ToArray();
+                byte[] fileBytes = memoryStream.ToArray();
 
-                        if (fname == EMBEDDED_FONT) //Special case for ImGui
-                            ImGuiFont = filebytes;
-
-                        var fontSystem = new FontSystem(settings);
-                        fontSystem.AddFont(filebytes);
-                        _fonts[fname] = fontSystem;
-                    }
+                var fontSystem = new FontSystem(settings);
+                fontSystem.AddFont(fileBytes);
+                _fonts[fName] = fontSystem;
             }
         }
-
-        public SpriteFontBase GetFont(string name, float size)
-        {
-            if (_fonts.TryGetValue(name, out FontSystem font))
-            {
-                return font.GetFont(size);
-            }
-
-            if (_fonts.Count > 0)
-                return _fonts.First().Value.GetFont(size);
-
-            return null;
-        }
-
-        public SpriteFontBase GetFont(string name) => GetFont(name, 12);
-
-        public string[] Fonts => _fonts.Keys.ToArray();
     }
+
+    public SpriteFontBase GetFont(string name, float size)
+    {
+        if (_fonts.TryGetValue(name, out FontSystem font))
+            return font.GetFont(size);
+
+        return _fonts.Count > 0 ? _fonts.First().Value.GetFont(size) : null;
+    }
+
+    public SpriteFontBase GetFont(string name) => GetFont(name, 12);
+
+    public string[] Fonts => _fonts.Keys.ToArray();
 }

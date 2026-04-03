@@ -5,22 +5,17 @@ using ClassicUO.Game.Managers;
 using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Input;
-using ClassicUO.Renderer;
 using ClassicUO.Resources;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using SDL3;
-using StbTextEditSharp;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using ClassicUO.Common.Enums;
-using ClassicUO.Utility.Logging;
-using static ClassicUO.Game.Managers.AutoLootManager;
 using ClassicUO.Game.UI.Gumps.GridHighLight;
 
 namespace ClassicUO.Game.UI.Gumps
@@ -4113,6 +4108,10 @@ namespace ClassicUO.Game.UI.Gumps
             const int minFontSize = 5;
             const int maxFontSize = 50;
             page = ((int)PAGE.TUOOptions + 1007);
+
+            // Enumerate once to save a bit of compute
+            (string[] availableFonts, int maxFontNameLength) = GetOrderedFontNames();
+
             content.AddToLeft(SubCategoryButton(lang.GetTazUO.FontSettings, page, content.LeftWidth));
             content.ResetRightSide();
 
@@ -4132,7 +4131,11 @@ namespace ClassicUO.Game.UI.Gumps
             (
                 GenerateFontSelector
                 (
-                    lang.GetTazUO.InfobarFont, ProfileManager.CurrentProfile.InfoBarFont, (i, s) =>
+                    availableFonts,
+                    maxFontNameLength,
+                    lang.GetTazUO.InfobarFont,
+                    ProfileManager.CurrentProfile.InfoBarFont,
+                    (i, s) =>
                     {
                         ProfileManager.CurrentProfile.InfoBarFont = s;
                         InfoBarGump.UpdateAllOptions();
@@ -4161,8 +4164,13 @@ namespace ClassicUO.Game.UI.Gumps
             content.AddToRight
             (
                 GenerateFontSelector
-                (lang.GetTazUO.SystemChatFont, ProfileManager.CurrentProfile.GameWindowSideChatFont,
-                    (i, s) => { ProfileManager.CurrentProfile.GameWindowSideChatFont = s; }),
+                (
+                    availableFonts,
+                    maxFontNameLength,
+                    lang.GetTazUO.SystemChatFont,
+                    ProfileManager.CurrentProfile.GameWindowSideChatFont,
+                    (i, s) => { ProfileManager.CurrentProfile.GameWindowSideChatFont = s; }
+                ),
                 true, page
             );
 
@@ -4182,8 +4190,14 @@ namespace ClassicUO.Game.UI.Gumps
             content.AddToRight
             (
                 GenerateFontSelector
-                (lang.GetTazUO.TooltipFont, ProfileManager.CurrentProfile.SelectedToolTipFont,
-                    (i, s) => { ProfileManager.CurrentProfile.SelectedToolTipFont = s; }), true, page
+                (
+                    availableFonts,
+                    maxFontNameLength,
+                    lang.GetTazUO.TooltipFont,
+                    ProfileManager.CurrentProfile.SelectedToolTipFont,
+                    (i, s) => { ProfileManager.CurrentProfile.SelectedToolTipFont = s; }
+                ),
+                true, page
             );
 
             content.Indent();
@@ -4200,8 +4214,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             content.AddToRight
             (
-                GenerateFontSelector(lang.GetTazUO.OverheadFont, ProfileManager.CurrentProfile.OverheadChatFont,
-                    (i, s) => { ProfileManager.CurrentProfile.OverheadChatFont = s; }),
+                GenerateFontSelector(
+                    availableFonts,
+                    maxFontNameLength,
+                    lang.GetTazUO.OverheadFont,
+                    ProfileManager.CurrentProfile.OverheadChatFont,
+                    (i, s) => { ProfileManager.CurrentProfile.OverheadChatFont = s; }
+                ),
                 true, page
             );
 
@@ -4220,8 +4239,13 @@ namespace ClassicUO.Game.UI.Gumps
             content.AddToRight
             (
                 GenerateFontSelector
-                (lang.GetTazUO.JournalFont, ProfileManager.CurrentProfile.SelectedTTFJournalFont,
-                    (i, s) => { ProfileManager.CurrentProfile.SelectedTTFJournalFont = s; }),
+                (
+                    availableFonts,
+                    maxFontNameLength,
+                    lang.GetTazUO.JournalFont,
+                    ProfileManager.CurrentProfile.SelectedTTFJournalFont,
+                    (i, s) => { ProfileManager.CurrentProfile.SelectedTTFJournalFont = s; }
+                ),
                 true, page
             );
 
@@ -4239,8 +4263,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             content.AddToRight
             (
-                GenerateFontSelector(lang.GetTazUO.NameplateFont, ProfileManager.CurrentProfile.NamePlateFont,
-                    (i, s) => { ProfileManager.CurrentProfile.NamePlateFont = s; }),
+                GenerateFontSelector(
+                    availableFonts,
+                    maxFontNameLength,
+                    lang.GetTazUO.NameplateFont,
+                    ProfileManager.CurrentProfile.NamePlateFont,
+                    (i, s) => { ProfileManager.CurrentProfile.NamePlateFont = s; }
+                ),
                 true, page
             );
 
@@ -4258,8 +4287,13 @@ namespace ClassicUO.Game.UI.Gumps
 
             content.AddToRight
             (
-                GenerateFontSelector(lang.GetTazUO.Optionsfont, ProfileManager.CurrentProfile.OptionsFont,
-                    (i, s) => { ProfileManager.CurrentProfile.OptionsFont = s; }),
+                GenerateFontSelector(
+                    availableFonts,
+                    maxFontNameLength,
+                    lang.GetTazUO.Optionsfont,
+                    ProfileManager.CurrentProfile.OptionsFont,
+                    (i, s) => { ProfileManager.CurrentProfile.OptionsFont = s; }
+                ),
                 true, page
             );
 
@@ -4661,6 +4695,35 @@ namespace ClassicUO.Game.UI.Gumps
             options.Add(new SettingsOption("", content, MainContent.RightWidth, (int)PAGE.TUOOptions));
         }
 
+        /// <summary>
+        ///     Retrieves an ordered collection of font names along with the maximum length of all font names.
+        ///     The font names are sorted to prioritize embedded fonts, followed by alphabetical order.
+        /// </summary>
+        /// <returns>
+        ///     A tuple containing:
+        ///     <ul>
+        ///         <li> An array of ordered font names.</li>
+        ///         <li>The maximum length of any font name in the collection.</li>
+        ///     </ul>
+        /// </returns>
+        private static (string[] Names, int MaxNameLength) GetOrderedFontNames()
+        {
+            int maxLength = 0;
+
+            string[] availableFonts = TrueTypeLoader.Instance.Fonts
+                .Select(font =>
+                {
+                    // Keep track of the max name length
+                    maxLength = Math.Max(maxLength, font.Length);
+                    return font;
+                })
+                .OrderBy(font => EmbeddedFontNames.Names.Contains(font) ? 0 : 1) // Embedded fonts should be first in line, ordered by name
+                .ThenBy(font => font) // Then, dynamically loaded fonts, ordered by name as well
+                .ToArray();
+
+            return (availableFonts, maxLength);
+        }
+
         public override void Dispose()
         {
             base.Dispose();
@@ -4675,14 +4738,30 @@ namespace ClassicUO.Game.UI.Gumps
             }
         }
 
-        private ComboBoxWithLabel GenerateFontSelector(string label, string selectedFont = "",
-            Action<int, string> onSelect = null)
+        private ComboBoxWithLabel GenerateFontSelector(
+            string[] fontNames,
+            int maxFontNameLength,
+            string label,
+            string selectedFont = "",
+            Action<int, string> onSelect = null
+            )
         {
-            string[] fontArray = TrueTypeLoader.Instance.Fonts;
-            int selectedFontInd = Array.IndexOf(fontArray, selectedFont);
+            int selectedFontInd = Array.IndexOf(fontNames, selectedFont);
 
-            return new ComboBoxWithLabel(World, label, 0, ThemeSettings.COMBO_BOX_WIDTH, fontArray, selectedFontInd,
-                onSelect);
+            // Guesstimate the combo's width based on the longest font name, otherwise we get bad wrapping/truncations.
+            // Definitely not a "pretty" solution but works well enough until we overhaul the settings pages.
+            int comboBoxWidth = Math.Min(maxFontNameLength * 8, 300);
+
+            return new ComboBoxWithLabel(
+                World,
+                label,
+                0,
+                comboBoxWidth,
+                fontNames,
+                selectedFontInd,
+                onSelect,
+                false
+            );
         }
 
         public Control GenConditionControl(int key, int width, bool createIfNotExists)
