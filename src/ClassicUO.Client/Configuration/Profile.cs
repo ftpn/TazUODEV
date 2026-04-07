@@ -63,9 +63,9 @@ namespace ClassicUO.Configuration
 
         // sounds
         public bool EnableSound { get; set; } = true;
-        public int SoundVolume { get; set; } = 70;
+        public int SoundVolume { get; set; } = 50;
         public bool EnableMusic { get; set; } = true;
-        public int MusicVolume { get; set; } = 70;
+        public int MusicVolume { get; set; } = 50;
         public bool EnableFootstepsSound { get; set; } = true;
         public bool EnableCombatMusic { get; set; } = true;
         public bool ReproduceSoundsInBackground { get; set; }
@@ -99,7 +99,7 @@ namespace ClassicUO.Configuration
         public ushort HarmfulHue { get; set; } = 0x0020;
         public ushort NeutralHue { get; set; } = 0x03B1;
         public bool EnabledSpellHue { get; set; }
-        public bool EnabledSpellFormat { get; set; }
+        public bool EnabledSpellFormat { get; set; } = true;
         public string SpellDisplayFormat { get; set; } = "{power} [{spell}]";
         public ushort PoisonHue { get; set; } = 0x0044;
         public ushort ParalyzedHue { get; set; } = 0x014C;
@@ -110,7 +110,7 @@ namespace ClassicUO.Configuration
 
         // visual
         public bool EnabledCriminalActionQuery { get; set; } = true;
-        public bool EnabledBeneficialCriminalActionQuery { get; set; } = false;
+        public bool EnabledBeneficialCriminalActionQuery { get; set; }
         public bool UseOldStatusGump { get; set; }
         public bool StatusGumpBarMutuallyExclusive { get; set; } = true;
         public int BackpackStyle { get; set; }
@@ -134,7 +134,7 @@ namespace ClassicUO.Configuration
         public int CircleOfTransparencyType { get; set; } // 0 = normal, 1 = like original client
         public int VendorGumpHeight { get; set; } = 350;   //original vendor gump size
         public float DefaultScale { get; set; } = 1.0f;
-        public bool EnableMousewheelScaleZoom { get; set; }
+        public bool EnableMousewheelScaleZoom { get; set; } = true;
         public bool RestoreScaleAfterUnpressCtrl { get; set; }
         public bool BandageSelfOld { get; set; } = true;
 
@@ -306,7 +306,7 @@ namespace ClassicUO.Configuration
 
         public bool DoubleClickToLootInsideContainers { get; set; }
 
-        public bool UseLargeContainerGumps { get; set; } = false;
+        public bool UseLargeContainerGumps { get; set; }
 
         public bool RelativeDragAndDropItems { get; set; }
 
@@ -318,9 +318,9 @@ namespace ClassicUO.Configuration
         public bool SaveHealthbars { get; set; }
         public bool TextFading { get; set; } = true;
 
-        public bool UseSmoothBoatMovement { get; set; } = false;
+        public bool UseSmoothBoatMovement { get; set; }
 
-        public bool IgnoreStaminaCheck { get; set; } = false;
+        public bool IgnoreStaminaCheck { get; set; }
 
         public bool ShowJournalClient { get; set; } = true;
         public bool ShowJournalObjects { get; set; } = true;
@@ -376,7 +376,7 @@ namespace ClassicUO.Configuration
             }
         }
 
-        public int AutoFollowDistance { get; set; } = 2;
+        public int AutoFollowDistance { get; set; } = 1;
         public bool DisableAutoFollowAlt { get; set; } = false;
         [JsonConverter(typeof(Point2Converter))] public Point ResizeJournalSize { get; set; } = new Point(410, 350);
         public bool FollowingMode { get; set; } = false;
@@ -384,21 +384,21 @@ namespace ClassicUO.Configuration
         public bool NamePlateHealthBar { get; set; } = true;
         public byte NamePlateOpacity { get; set; } = 75;
         public byte NamePlateHealthBarOpacity { get; set; } = 50;
-        public bool NamePlateHideAtFullHealth { get; set; } = true;
-        public bool NamePlateHideAtFullHealthInWarmode { get; set; } = true;
+        public bool NamePlateHideAtFullHealth { get; set; }
+        public bool NamePlateHideAtFullHealthInWarmode { get; set; }
         public byte NamePlateBorderOpacity { get; set; } = 50;
         public bool NamePlateAvoidOverlap { get; set; }
 
-        public bool LeftAlignToolTips { get; set; } = false;
+        public bool LeftAlignToolTips { get; set; }
         public bool ForceCenterAlignTooltipMobiles { get; set; } = true;
 
-        public bool CorpseSingleClickLoot { get; set; } = false;
+        public bool CorpseSingleClickLoot { get; set; }
 
-        public bool DisableSystemChat { get; set; } = false;
+        public bool DisableSystemChat { get; set; }
 
         public bool UsePromptPopup { get; set; } = true;
 
-        public uint SetFavoriteMoveBagSerial { get; set; } = 0;
+        public uint SetFavoriteMoveBagSerial { get; set; }
 
         #region GRID CONTAINER
         public bool UseGridLayoutContainerGumps { get; set; } = true;
@@ -524,7 +524,7 @@ namespace ClassicUO.Configuration
 
         public string OverheadChatFont { get; set; } = "avadonian";
         public int OverheadChatFontSize { get; set; } = 20;
-        public int OverheadChatWidth { get; set; } = 200;
+        public int OverheadChatWidth { get; set; } = 400;
 
         public string NamePlateFont { get; set; } = "avadonian";
         public int NamePlateFontSize { get; set; } = 20;
@@ -682,7 +682,7 @@ namespace ClassicUO.Configuration
         public bool EnablePostProcessingEffects { get; set; }
         public ushort PostProcessingType { get; set; }
         public bool DisableHotkeys { get; set; }
-        public bool DisableDismountInWarMode { get; set; }
+        public bool DisableDismountInWarMode { get; set; } = true;
         public bool EnableASyncMapLoading { get; set; } = true;
 
         public string TazUOChatNick

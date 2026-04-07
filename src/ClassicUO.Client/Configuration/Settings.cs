@@ -84,7 +84,7 @@ namespace ClassicUO.Configuration
 
         [JsonPropertyName("login_music")] public bool LoginMusic { get; set; } = true;
 
-        [JsonPropertyName("login_music_volume")] public int LoginMusicVolume { get; set; } = 70;
+        [JsonPropertyName("login_music_volume")] public int LoginMusicVolume { get; set; } = 50;
 
         [JsonPropertyName("fixed_time_step")] public bool FixedTimeStep { get; set; } = true;
 
