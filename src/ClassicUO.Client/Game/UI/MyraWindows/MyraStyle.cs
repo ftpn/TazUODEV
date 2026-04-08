@@ -15,6 +15,7 @@ public static class MyraStyle
     public const int STANDARD_SPACING = 3;
     public const int STANDARD_BORDER_ALPHA = 125;
     public static Color GridBorderColor { get; } = new Color(0, 0, 0, STANDARD_BORDER_ALPHA);
+    public static SpriteFontBase UiFont => _uiFont;
 
     private static Color TazUO_Orange = new(0.667f, 0.412f, 0.051f, 1f);
 

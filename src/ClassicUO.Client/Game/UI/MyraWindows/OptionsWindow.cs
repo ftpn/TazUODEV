@@ -5,7 +5,11 @@ using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Game.UI.MyraWindows.Widgets;
+using Microsoft.Xna.Framework;
+using Myra.Graphics2D;
+using Myra.Graphics2D.Brushes;
 using Myra.Graphics2D.UI;
+using Myra.Graphics2D.UI.Styles;
 
 namespace ClassicUO.Game.UI.MyraWindows;
 
@@ -36,8 +40,7 @@ public class OptionsWindow : MyraControl
 
         if(!_options.ContainsKey("General")) _options.Add("General", new List<OptionItem>());
 
-        _options["General"].Add(new (null,
-            () => MyraCheckButton.CreateWithCallback(
+        _options["General"].Add(new (() => MyraCheckButton.CreateWithCallback(
             profile.HighlightGameObjects,
             b => profile.HighlightGameObjects = b,
             lang.GetGeneral.HighlightObjects))
@@ -59,9 +62,29 @@ public class OptionsWindow : MyraControl
         optionsStack.Widgets.Add(_optionsPanel);
         _mainArea.AddWidget(optionsStack, 0, 1);
 
-        foreach (string category in _options.Keys) categoryPanel.Widgets.Add(new MyraButton(category, () => { ShowPage(category); }));
+        foreach (string category in _options.Keys) categoryPanel.Widgets.Add(ApplyTabStyleToButton(new MyraButton(category, () => { ShowPage(category); })));
 
         SetRootContent(_mainArea);
+    }
+
+    private static ButtonStyle _tabButtonStyle;
+    private MyraButton ApplyTabStyleToButton(MyraButton tabButton)
+    {
+        if (_tabButtonStyle == null)
+        {
+            ButtonStyle tabControlStyle = Stylesheet.Current.ButtonStyle;
+            _tabButtonStyle = new(tabControlStyle);
+
+
+            _tabButtonStyle.Background = new SolidBrush(Color.Transparent);
+            _tabButtonStyle.Border = new SolidBrush(new Color(0, 0, 0, MyraStyle.STANDARD_BORDER_ALPHA));
+            _tabButtonStyle.BorderThickness = new Thickness(1);
+            _tabButtonStyle.LabelStyle.Font = MyraStyle.UiFont;
+        }
+
+        tabButton.ApplyButtonStyle(_tabButtonStyle);
+
+        return tabButton;
     }
 
     private void ShowPage(string category)
@@ -71,7 +94,7 @@ public class OptionsWindow : MyraControl
         foreach (OptionItem optionItem in _options[category]) _optionsPanel.Widgets.Add(optionItem.GetWidget);
     }
 
-    private class OptionItem(string? subcategory, Func<Widget> createWidget)
+    private class OptionItem(Func<Widget> createWidget)
     {
         public Widget GetWidget
         {
