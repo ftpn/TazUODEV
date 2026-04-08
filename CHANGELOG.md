@@ -30,6 +30,9 @@ All notable changes to TazUO will be recorded here.
 ### Fixes
 * Fix accidentally broken game viewport - ([bittiez](https://github.com/bittiez))
 
+### Misc
+* Split stack gump now accepts spacebar in addition to enter to accept the amount - ([bittiez](https://github.com/bittiez))
+
 ## V5.0.0
 
 ### Breaking Changes
