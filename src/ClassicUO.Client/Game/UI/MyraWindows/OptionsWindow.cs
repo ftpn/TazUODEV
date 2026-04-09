@@ -1,11 +1,14 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using ClassicUO.Common.Enums;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
+using ClassicUO.Game.Scenes;
 using ClassicUO.Game.UI.Controls;
 using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Game.UI.MyraWindows.Widgets;
+using ClassicUO.Input;
 using ClassicUO.Utility;
 using Microsoft.Xna.Framework;
 using Myra.Events;
@@ -50,6 +53,9 @@ public class OptionsWindow : MyraControl
         SetupMobileOptions();
         SetupInterfaceOptions();
         SetupMiscOptions();
+        SetupTerrainStatics();
+        SetupSound();
+        SetupVideo();
     }
 
     private void Build()
@@ -447,6 +453,207 @@ public class OptionsWindow : MyraControl
             b => profile.ShowSkillsChangedMessage = b));
         opt.Add(CreateSliderOption(lang.GetGeneral.ChangeVolume, 0, 100, profile.ShowSkillsChangedDeltaValue,
             f => profile.ShowSkillsChangedDeltaValue = (int)f));
+    }
+
+    private void SetupTerrainStatics()
+    {
+        Profile profile = ProfileManager.CurrentProfile;
+        ModernOptionsGumpLanguage lang = Language.Instance.GetModernOptionsGumpLanguage;
+
+        if (!_options.ContainsKey("Terrain & Statics")) _options.Add("Terrain & Statics", new List<OptionItem>());
+        List<OptionItem> opt = _options["Terrain & Statics"];
+
+        opt.Add(CreateCheckboxOption(lang.GetGeneral.HideRoof, !profile.DrawRoofs, b => profile.DrawRoofs = !b));
+        opt.Add(CreateCheckboxOption(lang.GetGeneral.TreesToStump, profile.TreeToStumps, b => profile.TreeToStumps = b));
+        opt.Add(CreateCheckboxOption(lang.GetGeneral.HideVegetation, profile.HideVegetation, b => profile.HideVegetation = b));
+        opt.Add(CreateComboBox(lang.GetGeneral.MagicFieldType, profile.FieldsType, [
+            lang.GetGeneral.MagicFieldOpt_Normal, lang.GetGeneral.MagicFieldOpt_Static,
+            lang.GetGeneral.MagicFieldOpt_Tile
+        ], i => profile.FieldsType = i));
+    }
+
+    private void SetupSound()
+    {
+        Profile profile = ProfileManager.CurrentProfile;
+        ModernOptionsGumpLanguage lang = Language.Instance.GetModernOptionsGumpLanguage;
+
+        if (!_options.ContainsKey("Sound")) _options.Add("Sound", new List<OptionItem>());
+        List<OptionItem> opt = _options["Sound"];
+
+        opt.Add(CreateCheckboxOption(lang.GetSound.EnableSound, profile.EnableSound, b => profile.EnableSound = b));
+        opt.Add(CreateSliderOption(lang.GetSound.SharedVolume, 0, 100, profile.SoundVolume, f=>profile.SoundVolume=(int)f));
+        opt.Add(CreateCheckboxOption(lang.GetSound.EnableMusic, profile.EnableMusic, b => profile.EnableMusic = b));
+        opt.Add(CreateSliderOption(lang.GetSound.SharedVolume, 0, 100, profile.MusicVolume, f=>profile.MusicVolume=(int)f));
+        opt.Add(CreateCheckboxOption(lang.GetSound.LoginMusic, Settings.GlobalSettings.LoginMusic, b => Settings.GlobalSettings.LoginMusic = b));
+        opt.Add(CreateSliderOption(lang.GetSound.SharedVolume, 0, 100, Settings.GlobalSettings.LoginMusicVolume, f=>Settings.GlobalSettings.LoginMusicVolume=(int)f));
+        opt.Add(CreateCheckboxOption(lang.GetSound.PlayFootsteps, profile.EnableFootstepsSound, b => profile.EnableFootstepsSound = b));
+        opt.Add(CreateCheckboxOption(lang.GetSound.CombatMusic, profile.EnableCombatMusic, b => profile.EnableCombatMusic = b));
+        opt.Add(CreateCheckboxOption(lang.GetSound.BackgroundMusic, profile.ReproduceSoundsInBackground, b => profile.ReproduceSoundsInBackground = b));
+
+        opt.Add(CreateSpacer());
+
+        opt.Add(new OptionItem("Voice to text", () => new MyraButton("Create voice toggle button", () =>
+        {
+            var macroManager = MacroManager.TryGetMacroManager(World.Instance);
+            if (macroManager == null) return;
+            var macro = Macro.CreateFastMacro("Toggle Voice", MacroType.ToggleVoiceRecognition,
+                MacroSubType.MSC_NONE);
+            macroManager.PushToBack(macro);
+            UIManager.Add(new MacroButtonGump(World.Instance, macro, Mouse.Position.X, Mouse.Position.Y));
+        })));
+        ModernOptionsGumpLanguage.TazUO voiceLang = lang.GetTazUO;
+        opt.Add(CreateInputField(voiceLang.VoiceModelPath, profile.VoiceModelPath, s => profile.VoiceModelPath = s, voiceLang.VoiceModelPathTooltip));
+    }
+
+    private void SetupVideo()
+    {
+        Profile profile = ProfileManager.CurrentProfile;
+        ModernOptionsGumpLanguage lang = Language.Instance.GetModernOptionsGumpLanguage;
+
+        if (!_options.ContainsKey("Video")) _options.Add("Video", new List<OptionItem>());
+        List<OptionItem> opt = _options["Video"];
+
+        opt.Add(CreateSliderOption(lang.GetVideo.FPSCap, Constants.MIN_FPS, Constants.MAX_FPS, Settings.GlobalSettings.FPS,
+            f =>
+            {
+                Settings.GlobalSettings.FPS = (int)f;
+                Client.Game.SetRefreshRate((int)f);
+            }));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.BackgroundFPS, profile.ReduceFPSWhenInactive, b => profile.ReduceFPSWhenInactive = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.EnableVSync, profile.EnableVSync, b => { profile.EnableVSync = b; Client.Game?.SetVSync(b); }));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.FullsizeViewport, profile.GameWindowFullSize, b =>
+        {
+            profile.GameWindowFullSize = b;
+
+            WorldViewportGump viewport = WorldViewportGump.Instance;
+            if (viewport == null) return;
+
+            if (b)
+            {
+                viewport.ResizeGameWindow(new Point(Client.Game.Window.ClientBounds.Width,
+                    Client.Game.Window.ClientBounds.Height));
+                viewport.SetGameWindowPosition(new Point(0, 0));
+                profile.GameWindowPosition = new Point(0, 0);
+            }
+            else
+            {
+                viewport.ResizeGameWindow(new Point(600, 480));
+                viewport.SetGameWindowPosition(new Point(25, 25));
+                profile.GameWindowPosition = new Point(25, 25);
+            }
+
+            // Trigger a full update to ensure borders and positioning are correct
+            viewport.OnWindowResized();
+        }));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.FullScreen, profile.WindowBorderless, b =>
+        {
+            profile.WindowBorderless = b;
+            Client.Game.SetWindowBorderless(b);
+        }));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.LockViewport, profile.GameWindowLock, b => profile.GameWindowLock = b));
+        opt.Add(CreateSliderOption(lang.GetVideo.ViewportX, 0, Client.Game.Window.ClientBounds.Width, profile.GameWindowPosition.X,
+            f =>
+            {
+                profile.GameWindowPosition = new Point((int)f, profile.GameWindowPosition.Y);
+                WorldViewportGump.Instance?.SetGameWindowPosition(profile.GameWindowPosition);
+            }));
+        opt.Add(CreateSliderOption(lang.GetVideo.ViewportY, 0, Client.Game.Window.ClientBounds.Height, profile.GameWindowPosition.Y,
+            f =>
+            {
+                profile.GameWindowPosition = new Point( profile.GameWindowPosition.Y, (int)f);
+                WorldViewportGump.Instance?.SetGameWindowPosition(profile.GameWindowPosition);
+            }));
+
+        opt.Add(CreateSliderOption(lang.GetVideo.ViewportW, 0, Client.Game.Window.ClientBounds.Width, profile.GameWindowSize.X,
+            f =>
+            {
+                profile.GameWindowSize = new Point((int)f, profile.GameWindowSize.Y);
+                WorldViewportGump.Instance?.SetGameWindowPosition(profile.GameWindowPosition);
+            }));
+        opt.Add(CreateSliderOption(lang.GetVideo.ViewportH, 0, Client.Game.Window.ClientBounds.Height, profile.GameWindowSize.Y,
+            f =>
+            {
+                profile.GameWindowSize = new Point(profile.GameWindowSize.X, (int)f);
+                WorldViewportGump.Instance?.SetGameWindowPosition(profile.GameWindowPosition);
+            }));
+
+        opt.Add(CreateSpacer());
+
+        int cameraZoomCount = (int)((Client.Game.Scene.Camera.ZoomMax - Client.Game.Scene.Camera.ZoomMin) /
+                                    Client.Game.Scene.Camera.ZoomStep);
+        int cameraZoomIndex = cameraZoomCount -
+                              (int)((Client.Game.Scene.Camera.ZoomMax - Client.Game.Scene.Camera.Zoom) /
+                                    Client.Game.Scene.Camera.ZoomStep);
+
+        opt.Add(CreateSliderOption(lang.GetVideo.DefaultZoom, 0, cameraZoomCount, cameraZoomIndex, f =>
+        {
+            profile.DefaultScale = Client.Game.Scene.Camera.Zoom =
+                ((int)f * Client.Game.Scene.Camera.ZoomStep) + Client.Game.Scene.Camera.ZoomMin;
+        }));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.ZoomWheel, profile.EnableMousewheelScaleZoom, b => profile.EnableMousewheelScaleZoom = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.ReturnDefaultZoom, profile.RestoreScaleAfterUnpressCtrl, b => profile.RestoreScaleAfterUnpressCtrl = b));
+
+        opt.Add(CreateSpacer());
+
+        opt.Add(CreateCheckboxOption(lang.GetVideo.AltLights, profile.UseAlternativeLights, b => profile.UseAlternativeLights = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.CustomLLevel, profile.UseCustomLightLevel, b =>
+        {
+            profile.UseCustomLightLevel = b;
+
+            if (b)
+            {
+                World.Instance.Light.Overall = profile.LightLevelType == 1
+                    ? Math.Min(World.Instance.Light.RealOverall, profile.LightLevel)
+                    : profile.LightLevel;
+                World.Instance.Light.Personal = 0;
+            }
+            else
+            {
+                World.Instance.Light.Overall = World.Instance.Light.RealOverall;
+                World.Instance.Light.Personal = World.Instance.Light.RealPersonal;
+            }
+        }));
+        opt.Add(CreateSliderOption(lang.GetVideo.Level, 0, 0x1E, 0x1E - profile.LightLevel, f =>
+        {
+            profile.LightLevel = (byte)(0x1E - (int)f);
+
+            if (profile.UseCustomLightLevel)
+            {
+                World.Instance.Light.Overall = profile.LightLevelType == 1
+                    ? Math.Min(World.Instance.Light.RealOverall, profile.LightLevel)
+                    : profile.LightLevel;
+                World.Instance.Light.Personal = 0;
+            }
+            else
+            {
+                World.Instance.Light.Overall = World.Instance.Light.RealOverall;
+                World.Instance.Light.Personal = World.Instance.Light.RealPersonal;
+            }
+        }));
+        opt.Add(CreateComboBox(lang.GetVideo.LightType, profile.LightLevelType, [lang.GetVideo.LightType_Absolute, lang.GetVideo.LightType_Minimum
+        ], i => profile.LightLevelType = i));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.DarkNight, profile.UseDarkNights, b => profile.UseDarkNights = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.ColoredLight, profile.UseColoredLights, b => profile.UseColoredLights = b));
+
+        opt.Add(CreateSpacer());
+
+        opt.Add(CreateCheckboxOption(lang.GetVideo.EnableDeathScreen, profile.EnableDeathScreen, b => profile.EnableDeathScreen = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.BWDead, profile.EnableBlackWhiteEffect, b => profile.EnableBlackWhiteEffect = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.MouseThread, Settings.GlobalSettings.RunMouseInASeparateThread, b => Settings.GlobalSettings.RunMouseInASeparateThread = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.TargetAura, profile.AuraOnMouse, b => profile.AuraOnMouse = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.AnimWater, profile.AnimatedWaterEffect, b => profile.AnimatedWaterEffect = b));
+        opt.Add(CreateCheckboxOption("Enable post processing effects", profile.EnablePostProcessingEffects, b => { profile.EnablePostProcessingEffects = b; GameScene.Instance?.SetPostProcessingSettings(); }));
+        opt.Add(CreateComboBox("Processing type", profile.PostProcessingType, ["point", "linear", "anisotropic", "xbr"], i =>
+        {
+            profile.PostProcessingType = (ushort)i;
+            GameScene.Instance?.SetPostProcessingSettings();
+        }));
+
+        opt.Add(CreateSpacer());
+        opt.Add(CreateCheckboxOption(lang.GetVideo.EnableShadows, profile.ShadowsEnabled, b => profile.ShadowsEnabled = b));
+        opt.Add(CreateCheckboxOption(lang.GetVideo.RockTreeShadows, profile.ShadowsStatics, b => profile.ShadowsStatics = b));
+        opt.Add(CreateSliderOption(lang.GetVideo.TerrainShadowLevel, Constants.MIN_TERRAIN_SHADOWS_LEVEL, Constants.MAX_TERRAIN_SHADOWS_LEVEL,
+            profile.TerrainShadowsLevel, f => profile.TerrainShadowsLevel = (int)f));
     }
 
     private class OptionItem(string searchText, Func<Widget> createWidget, string? tags = null)
