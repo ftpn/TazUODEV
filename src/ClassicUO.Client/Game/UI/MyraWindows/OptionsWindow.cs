@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using ClassicUO.Common.Enums;
 using ClassicUO.Configuration;
 using ClassicUO.Game.Managers;
@@ -14,6 +15,7 @@ using Microsoft.Xna.Framework;
 using Myra.Events;
 using Myra.Graphics2D;
 using Myra.Graphics2D.Brushes;
+using Myra.Graphics2D.TextureAtlases;
 using Myra.Graphics2D.UI;
 using Myra.Graphics2D.UI.Styles;
 using Label = Myra.Graphics2D.UI.Label;
@@ -28,11 +30,12 @@ public class OptionsWindow : MyraControl
     private readonly Dictionary<string, List<OptionItem>> _options = new();
 
     private readonly MyraGrid _mainArea = new();
-    private readonly VerticalStackPanel _optionsPanel = new();
+    private readonly VerticalStackPanel _optionsPanel = new() { Spacing =  MyraStyle.STANDARD_SPACING, Padding = new Thickness(3, 0, 0, 0) };
     private readonly VerticalStackPanel _searchPanel = new();
     private readonly VerticalStackPanel _optionsStack = new();
     private readonly MyraInputBox _searchField = new();
     private string _lastCategory = string.Empty;
+    private List<Panel> _visualContainers = new();
 
     public OptionsWindow() : base("Options")
     {
@@ -45,6 +48,9 @@ public class OptionsWindow : MyraControl
         Build();
 
         CenterInViewPort();
+
+        _rootWindow.Props.MaxHeight = 800;
+        _rootWindow.Props.Resize.MaxHeight = 800;
     }
 
     private void SetupOptions()
@@ -57,6 +63,8 @@ public class OptionsWindow : MyraControl
         SetupSound();
         SetupVideo();
         SetupInfoBarOptions();
+        SetupTooltipOptions();
+        SetupSpeechOptions();
     }
 
     private void Build()
@@ -73,7 +81,7 @@ public class OptionsWindow : MyraControl
         _searchField.TextChangedByUser += SearchFieldOnTextChangedByUser;
         _mainArea.AddWidget(_searchField, 0, 0, null, 2);
 
-        VerticalStackPanel categoryPanel = new() { Spacing = MyraStyle.STANDARD_SPACING };
+        VerticalStackPanel categoryPanel = new() { Spacing = MyraStyle.STANDARD_SPACING};
         _mainArea.AddWidget(categoryPanel.WrapInScroll(800), 1, 0);
 
         _optionsStack.Widgets.Add(_optionsPanel);
@@ -91,6 +99,9 @@ public class OptionsWindow : MyraControl
 
     private void SearchFieldOnTextChangedByUser(object? sender, ValueChangedEventArgs<string> e)
     {
+        foreach (Panel visualContainer in _visualContainers) visualContainer.RemoveFromParent();
+        _visualContainers.Clear();
+
         string search = e.NewValue?.Trim() ?? string.Empty;
 
         if (string.IsNullOrEmpty(search))
@@ -144,13 +155,55 @@ public class OptionsWindow : MyraControl
 
     private void ShowPage(string category)
     {
+        foreach (Panel visualContainer in _visualContainers) visualContainer.RemoveFromParent();
+        _visualContainers.Clear();
+
         _searchField.Text = string.Empty;
         _optionsStack.Widgets.Clear();
         _optionsStack.Widgets.Add(_optionsPanel);
 
         _optionsPanel.Widgets.Clear();
 
-        foreach (OptionItem optionItem in _options[category]) _optionsPanel.Widgets.Add(optionItem.GetWidget);
+        List<VisualContainerData> visualContainers = new();
+        VisualContainerData current = new();
+
+        int cY = 0;
+
+        foreach (OptionItem optionItem in _options[category])
+        {
+            _optionsPanel.Widgets.Add(optionItem.GetWidget);
+            //Not beautiful, but can't seem to get accurate height, x or y until it renders without doing this
+            Point size = optionItem.GetWidget.Measure(new Point(1000, 1000));
+
+            if (optionItem.IsStartVisualContainer) current.StartY = cY;
+
+            cY += size.Y + MyraStyle.STANDARD_SPACING;
+
+            if (optionItem.IsEndVisualContainer)
+            {
+                current.EndY = cY;
+                visualContainers.Add(current);
+                current = new();
+            }
+        }
+
+        Point optSize = _optionsPanel.Measure(new Point(1000, 1000));
+
+        foreach (VisualContainerData cont in visualContainers)
+        {
+            var d = new Panel();
+            d.Background = MyraStyle.NinePatchButtonDown; //new SolidBrush(new Color(0, 0, 0, 35));
+            Rectangle rect = cont.GetRect(optSize.X);
+            d.Width = rect.Width;
+            d.Height = rect.Height + MyraStyle.STANDARD_SPACING + 5;
+            d.Left = rect.Left;
+            d.Top = rect.Top - 5;
+
+            _mainArea.Widgets.Insert(0, d);
+            Grid.SetRow(d, 1);
+            Grid.SetColumn(d, 1);
+            _visualContainers.Add(d);
+        }
 
         _lastCategory = category;
     }
@@ -202,7 +255,7 @@ public class OptionsWindow : MyraControl
                 UIManager.Add(new ModernColorPicker(World.Instance, onChange));
             };
 
-            return item;
+            return item.PlaceBefore(new MyraLabel(label, MyraLabel.TextStyle.P));
         });
 
     private static OptionItem CreateInputField(string label, string text, Action<string> onChange,
@@ -213,7 +266,7 @@ public class OptionsWindow : MyraControl
         return wid;
     });
 
-    private static OptionItem CreateSpacer() => new(string.Empty, () => new MyraSpacer(1, 3));
+    private static OptionItem CreateSpacer() => new(string.Empty, () => new MyraSpacer(1, 4), skipSearch: true);
 
     private void SetupGeneralOptions()
     {
@@ -545,7 +598,7 @@ public class OptionsWindow : MyraControl
 
             // Trigger a full update to ensure borders and positioning are correct
             viewport.OnWindowResized();
-        }));
+        }).BeginVisualContainer());
         opt.Add(CreateCheckboxOption(lang.GetVideo.FullScreen, profile.WindowBorderless, b =>
         {
             profile.WindowBorderless = b;
@@ -576,7 +629,7 @@ public class OptionsWindow : MyraControl
             {
                 profile.GameWindowSize = new Point(profile.GameWindowSize.X, (int)f);
                 WorldViewportGump.Instance?.SetGameWindowPosition(profile.GameWindowPosition);
-            }));
+            }).EndVisualContainer());
 
         opt.Add(CreateSpacer());
 
@@ -663,12 +716,66 @@ public class OptionsWindow : MyraControl
         _options["Info Bar"].Add(new OptionItem("Info Bar", InfoBarOptionsContent.Build));
     }
 
-    private class OptionItem(string searchText, Func<Widget> createWidget, string? tags = null)
+    private void SetupTooltipOptions()
     {
+        Profile profile = ProfileManager.CurrentProfile;
+        ModernOptionsGumpLanguage lang = Language.Instance.GetModernOptionsGumpLanguage;
+
+        if (!_options.ContainsKey("Tooltips")) _options.Add("Tooltips", new List<OptionItem>());
+        List<OptionItem> opt = _options["Tooltips"];
+
+        opt.Add(CreateSliderOption(lang.GetToolTips.ToolTipDelay, 0, 1000, profile.TooltipDelayBeforeDisplay, f => profile.TooltipDelayBeforeDisplay = (int)f));
+        opt.Add(CreateSliderOption(lang.GetToolTips.ToolTipBG, 0, 100, profile.TooltipBackgroundOpacity, f => profile.TooltipBackgroundOpacity = (int)f));
+        opt.Add(CreateHuePicker(lang.GetToolTips.ToolTipFont, profile.TooltipTextHue, h => profile.TooltipTextHue = h));
+    }
+
+    private void SetupSpeechOptions()
+    {
+        Profile profile = ProfileManager.CurrentProfile;
+        ModernOptionsGumpLanguage lang = Language.Instance.GetModernOptionsGumpLanguage;
+
+        if (!_options.ContainsKey("Speech")) _options.Add("Speech", new List<OptionItem>());
+        List<OptionItem> opt = _options["Speech"];
+
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.ScaleSpeechDelay, profile.ScaleSpeechDelay, b => profile.ScaleSpeechDelay = b));
+        opt.Add(CreateSliderOption(lang.GetSpeech.SpeechDelay, 0, 1000, profile.SpeechDelay, f => profile.SpeechDelay = (int)f));
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.SaveJournalE, profile.SaveJournalToFile, b => profile.SaveJournalToFile = b));
+
+        opt.Add(CreateSpacer());
+
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.ChatEnterActivation, profile.ActivateChatAfterEnter, b => profile.ActivateChatAfterEnter = b));
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.ChatEnterSpecial, profile.ActivateChatAdditionalButtons, b => profile.ActivateChatAdditionalButtons = b));
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.ShiftEnterChat, profile.ActivateChatShiftEnterSupport, b => profile.ActivateChatShiftEnterSupport = b));
+
+        opt.Add(CreateSpacer());
+
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.ChatGradient, profile.HideChatGradient, b => profile.HideChatGradient = b));
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.HideGuildChat, profile.IgnoreGuildMessages, b => profile.IgnoreGuildMessages = b));
+        opt.Add(CreateCheckboxOption(lang.GetSpeech.HideAllianceChat, profile.IgnoreAllianceMessages, b => profile.IgnoreAllianceMessages = b));
+
+        opt.Add(CreateSpacer());
+
+        opt.Add(CreateHuePicker(lang.GetSpeech.SpeechColor, profile.SpeechHue,  b => profile.SpeechHue = b).BeginVisualContainer());
+        opt.Add(CreateHuePicker(lang.GetSpeech.YellColor, profile.YellHue, b => profile.YellHue = b));
+        opt.Add(CreateHuePicker(lang.GetSpeech.PartyColor, profile.PartyMessageHue, b => profile.PartyMessageHue = b));
+        opt.Add(CreateHuePicker(lang.GetSpeech.AllianceColor, profile.AllyMessageHue, b => profile.AllyMessageHue = b));
+        opt.Add(CreateHuePicker(lang.GetSpeech.EmoteColor, profile.EmoteHue, b => profile.EmoteHue = b));
+        opt.Add(CreateHuePicker(lang.GetSpeech.WhisperColor, profile.WhisperHue, b => profile.WhisperHue = b));
+        opt.Add(CreateHuePicker(lang.GetSpeech.GuildColor, profile.GuildMessageHue, b => profile.GuildMessageHue = b));
+        opt.Add(CreateHuePicker(lang.GetSpeech.CharColor, profile.ChatMessageHue, b => profile.ChatMessageHue = b).EndVisualContainer());
+    }
+
+    private class OptionItem(string searchText, Func<Widget> createWidget, string? tags = null, bool skipSearch = false)
+    {
+        public bool IsStartVisualContainer { get; private set; }
+        public bool IsEndVisualContainer { get; private set; }
+
         private string? _tags = tags;
 
         public bool MatchesSearch(string text)
         {
+            if (skipSearch) return false;
+
             if (searchText.Contains(text, StringComparison.OrdinalIgnoreCase)) return true;
 
             return _tags.NotNullNotEmpty() && _tags!.Contains(text, StringComparison.OrdinalIgnoreCase);
@@ -688,6 +795,31 @@ public class OptionsWindow : MyraControl
         {
             _tags = tags;
             return this;
+        }
+
+        public OptionItem BeginVisualContainer()
+        {
+            IsStartVisualContainer = true;
+            return this;
+        }
+
+        public OptionItem EndVisualContainer()
+        {
+            IsEndVisualContainer = true;
+            return this;
+        }
+    }
+
+    private class VisualContainerData
+    {
+        public int StartY;
+        public int EndY;
+
+        public Rectangle GetRect(int width)
+        {
+            var current = new Rectangle(0, StartY, width, EndY - StartY);
+
+            return current;
         }
     }
 }
