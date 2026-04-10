@@ -3923,7 +3923,7 @@ namespace ClassicUO.Game.UI.Gumps
                 (
                     lang.GetTazUO.SOSGumpID, ThemeSettings.INPUT_WIDTH, profile.SOSGumpID.ToString(), true, (s, e) =>
                     {
-                        if (uint.TryParse(((InputField.StbTextBox)s).Text, out uint id))
+                        if (StringHelper.TryParseUint(((InputField.StbTextBox)s).Text, out uint id))
                         {
                             profile.SOSGumpID = id;
                         }

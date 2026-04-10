@@ -24,6 +24,7 @@ All notable changes to TazUO will be recorded here.
 
 ### Fixes
 * Fix for latest UO Publish causing a crash in animation loading - ([bittiez](https://github.com/bittiez))
+* SOS Gump ID now supports entering id as both hex and int(0x0000, or 0000 directly) - ([bittiez](https://github.com/bittiez))
 
 ## V5.1.0
 
