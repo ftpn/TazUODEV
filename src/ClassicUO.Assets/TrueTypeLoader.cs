@@ -390,7 +390,7 @@ public class TrueTypeLoader
             if (TryGetSystemFont(name, size, out SpriteFontBase sysFont))
                 return sysFont;
 
-            // This is to repeated disk hits if a font is botched or otherwise unusable.
+            // This is to prevent repeated disk hits if a font is botched or otherwise unusable.
             // We can also note in cache that this font family is problematic, but if we've gotten here,
             // it means the initial cache population run concluded that this font is valid.
             Log.Warn($"Could not load system font '{name}'. Family will be ignored");
@@ -407,7 +407,16 @@ public class TrueTypeLoader
 
     public SpriteFontBase GetFont(string name) => GetFont(name, 12);
 
-    public string[] Fonts => _fonts.Keys.Concat(_availableSystemFontFamilyNames).ToArray();
+    public string[] Fonts
+    {
+        get
+        {
+            // Construct a deduplicated list of font names.
+            // This is used only for the options gump so performance is less of a concern here.
+            var fontNames = new List<string>(_fonts.Keys.Where(name => !_availableSystemFontFamilyNames.Contains(name)));
+            return fontNames.Concat(_availableSystemFontFamilyNames).ToArray();
+        }
+    }
 }
 
 /// <summary>
