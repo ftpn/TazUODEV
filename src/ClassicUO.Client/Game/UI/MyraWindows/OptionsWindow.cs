@@ -65,6 +65,7 @@ public class OptionsWindow : MyraControl
         SetupInfoBarOptions();
         SetupTooltipOptions();
         SetupSpeechOptions();
+        SetupCombatOptions();
     }
 
     private void Build()
@@ -192,7 +193,10 @@ public class OptionsWindow : MyraControl
         foreach (VisualContainerData cont in visualContainers)
         {
             var d = new Panel();
-            d.Background = MyraStyle.NinePatchButtonDown; //new SolidBrush(new Color(0, 0, 0, 35));
+            // d.Background = MyraStyle.NinePatchButtonDown;
+            d.Background = new SolidBrush(new Color(0, 0, 0, 25));
+            d.Border = new SolidBrush(new Color(0, 0, 0, 75));
+            d.BorderThickness = new Thickness(2);
             Rectangle rect = cont.GetRect(optSize.X);
             d.Width = rect.Width;
             d.Height = rect.Height + MyraStyle.STANDARD_SPACING + 5;
@@ -763,6 +767,37 @@ public class OptionsWindow : MyraControl
         opt.Add(CreateHuePicker(lang.GetSpeech.WhisperColor, profile.WhisperHue, b => profile.WhisperHue = b));
         opt.Add(CreateHuePicker(lang.GetSpeech.GuildColor, profile.GuildMessageHue, b => profile.GuildMessageHue = b));
         opt.Add(CreateHuePicker(lang.GetSpeech.CharColor, profile.ChatMessageHue, b => profile.ChatMessageHue = b).EndVisualContainer());
+    }
+
+    private void SetupCombatOptions()
+    {
+        Profile profile = ProfileManager.CurrentProfile;
+        ModernOptionsGumpLanguage lang = Language.Instance.GetModernOptionsGumpLanguage;
+
+        if (!_options.ContainsKey("Combat")) _options.Add("Combat", new List<OptionItem>());
+        List<OptionItem> opt = _options["Combat"];
+
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.HoldTabForCombat, profile.HoldDownKeyTab, b => profile.HoldDownKeyTab = b));
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.QueryBeforeAttack, profile.EnabledCriminalActionQuery, b => profile.EnabledCriminalActionQuery = b));
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.QueryBeforeBeneficial, profile.EnabledBeneficialCriminalActionQuery, b => profile.EnabledBeneficialCriminalActionQuery = b));
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.EnableOverheadSpellFormat, profile.EnabledSpellFormat, b => profile.EnabledSpellFormat = b).BeginVisualContainer());
+        opt.Add(CreateInputField(lang.GetCombatSpells.SpellOverheadFormat, profile.SpellDisplayFormat, s => profile.SpellDisplayFormat = s).EndVisualContainer());
+
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.EnableOverheadSpellHue, profile.EnabledSpellHue, b => profile.EnabledSpellHue = b));
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.SingleClickForSpellIcons, profile.CastSpellsByOneClick, b => profile.CastSpellsByOneClick = b));
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.ShowBuffDurationOnOldStyleBuffBar, profile.BuffBarTime, b => profile.BuffBarTime = b));
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.EnableFastSpellHotkeyAssigning, profile.FastSpellsAssign, b => profile.FastSpellsAssign = b));
+        opt.Add(CreateCheckboxOption(lang.GetCombatSpells.EnableDPSCounter, profile.ShowDPS, b => profile.ShowDPS = b));
+
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.InnocentColor, profile.InnocentHue, b => profile.InnocentHue = b).BeginVisualContainer());
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.BeneficialSpell, profile.BeneficHue, b => profile.BeneficHue = b));
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.FriendColor, profile.FriendHue, b => profile.FriendHue = b));
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.HarmfulSpell, profile.HarmfulHue, b => profile.HarmfulHue = b));
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.Criminal, profile.CriminalHue, b => profile.CriminalHue = b));
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.NeutralSpell, profile.NeutralHue, b => profile.NeutralHue = b));
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.CanBeAttackedHue, profile.CanAttackHue, b => profile.CanAttackHue = b));
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.Murderer, profile.MurdererHue, b => profile.MurdererHue = b));
+        opt.Add(CreateHuePicker(lang.GetCombatSpells.Enemy, profile.EnemyHue, b => profile.EnemyHue = b).EndVisualContainer());
     }
 
     private class OptionItem(string searchText, Func<Widget> createWidget, string? tags = null, bool skipSearch = false)
