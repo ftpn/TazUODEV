@@ -42,6 +42,17 @@ public static class SystemFontProvider
         select @group.Value;
 
     /// <summary>
+    ///     Retrieves the font faces for the given font family name if it exists
+    /// </summary>
+    /// <param name="name">The name of the font family to retrieve</param>
+    /// <returns>
+    ///     A <see cref="FontsByFamily" /> object containing the font family's name and font faces
+    ///     or <c>null</c> if the family does not exist or could not be processed
+    /// </returns>
+    public static FontsByFamily? GetSystemFontFamilyByName(string name) =>
+        SystemFonts.TryGet(name, out FontFamily family) ? GetSystemFontsByFamily(family) : null;
+
+    /// <summary>
     ///     Retrieves the font faces and the corresponding family name for a given font family.
     /// </summary>
     /// <param name="family">The font family from which font data will be retrieved.</param>
