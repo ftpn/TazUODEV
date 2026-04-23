@@ -11,7 +11,6 @@ using ClassicUO.Game.UI.Gumps;
 using ClassicUO.Input;
 using ClassicUO.Utility;
 using ClassicUO.Utility.Logging;
-using Microsoft.Scripting.Utils;
 using Microsoft.Xna.Framework;
 
 namespace ClassicUO.Game.UI.Controls
@@ -450,7 +449,7 @@ namespace ClassicUO.Game.UI.Controls
         /// The overhead for the copy here should be imperceptible, but if necessary, the hot flow
         /// can be optimized back to using references to the static members instead
         /// </remarks>
-        /// <param name="layers">The layer array to sort <b>in place</b></param>
+        /// <param name="layers">The layer array to return a sorted copy of</param>
         private static Layer[] GetOrderedLayersCopy(Layer[] layers)
         {
             var copy = (Layer[])layers?.Clone();
@@ -460,7 +459,7 @@ namespace ClassicUO.Game.UI.Controls
             if (Settings.GlobalSettings.CustomServer != Settings.CustomServers.Eventine || !(layers?.Length > 2))
                 return copy;
 
-            int legsLayerIdx = copy.FindIndex(l => l == Layer.Legs);
+            int legsLayerIdx = copy.IndexOf(Layer.Legs);
             if (legsLayerIdx <= 0)
                 return copy;
 
