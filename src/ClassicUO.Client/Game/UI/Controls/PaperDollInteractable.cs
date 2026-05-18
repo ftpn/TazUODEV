@@ -369,12 +369,11 @@ namespace ClassicUO.Game.UI.Controls
                     }
                 }
 
-                int bx = 0;
-
+                // The backpack is shifted slightly left
+                // to accomodate for the wider-than-normal sidebar we have
+                int bx = 8;
                 if (_paperDollGump.World.ClientFeatures.PaperdollBooks)
-                {
-                    bx = 6;
-                }
+                    bx += 6;
 
                 Add(
                     new GumpPicEquipment(
