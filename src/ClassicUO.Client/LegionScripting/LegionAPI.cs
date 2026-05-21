@@ -1271,7 +1271,7 @@ namespace ClassicUO.LegionScripting
         /// Say a message outloud.
         /// Example:
         /// ```py
-        /// API.Say("Hello friend!")
+        /// API.Msg("Hello friend!")
         /// ```
         /// </summary>
         /// <param name="message">The message to say</param>

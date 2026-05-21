@@ -40,6 +40,7 @@ All notable changes to TazUO will be recorded here.
 * Allow deletion of individual pieces of house stairs - [P.R 466](https://github.com/PlayTazUO/TazUO/pull/466) ([yuval-po](https://github.com/yuval-po))
 * Add missing Shirt and Kilt slot to paperdoll - [P.R 467](https://github.com/PlayTazUO/TazUO/pull/467) ([yuval-po](https://github.com/yuval-po))
 * Two Modern Paperdoll issues (closure and context menus) - [P.R 468](https://github.com/PlayTazUO/TazUO/pull/468) ([yuval-po](https://github.com/yuval-po))
+* Allow resetting of outline color via the SetOutlineColor API - [P.R 471](https://github.com/PlayTazUO/TazUO/pull/471) ([yuval-po](https://github.com/yuval-po))
 
 ## V5.1.0
 

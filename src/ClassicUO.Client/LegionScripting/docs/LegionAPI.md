@@ -21,7 +21,7 @@ You can now type `-updateapi` in game to download the latest API.py file.
 
 [Additional notes](../notes/)  
 
-*This was generated on `4/22/26`.*
+*This was generated on `5/21/26`.*
 
 ## Properties
 ### `Events`
@@ -981,7 +981,7 @@ You can now type `-updateapi` in game to download the latest API.py file.
  Say a message outloud.
  Example:
  ```py
- API.Say("Hello friend!")
+ API.Msg("Hello friend!")
  ```
 
 
