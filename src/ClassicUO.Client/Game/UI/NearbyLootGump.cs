@@ -238,11 +238,11 @@ namespace ClassicUO.Game.UI
         {
             if (_openedCorpses.Contains(corpse))
                 return;
+            if (_corpsesRequested.Contains(corpse.Serial))
+                return;
             if (corpse.Distance > ProfileManager.CurrentProfile.AutoOpenCorpseRange)
                 return;
-            if(ProfileManager.CurrentProfile.NearbyLootConcealsContainerOnOpen)
-                _corpsesRequested.Add(corpse.Serial);
-
+            _corpsesRequested.Add(corpse.Serial);
             GameActions.QueueOpenCorpse(corpse.Serial);
         }
         private void LootSelectedIndex()
@@ -257,8 +257,10 @@ namespace ClassicUO.Game.UI
         {
             if (_corpsesRequested.Contains(serial))
             {
-                if (remove) _corpsesRequested.Remove(serial);
-                return true;
+                bool shouldConceal = ProfileManager.CurrentProfile?.NearbyLootConcealsContainerOnOpen == true;
+                if (remove && shouldConceal)
+                    _corpsesRequested.Remove(serial);
+                return shouldConceal;
             }
 
             return false;
