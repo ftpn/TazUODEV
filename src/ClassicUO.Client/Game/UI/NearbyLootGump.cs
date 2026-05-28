@@ -255,12 +255,13 @@ namespace ClassicUO.Game.UI
 
         public static bool IsCorpseRequested(uint serial, bool remove = true)
         {
+            if (!ProfileManager.CurrentProfile.NearbyLootConcealsContainerOnOpen)
+                return false;
+
             if (_corpsesRequested.Contains(serial))
             {
-                bool shouldConceal = ProfileManager.CurrentProfile?.NearbyLootConcealsContainerOnOpen == true;
-                if (remove && shouldConceal)
-                    _corpsesRequested.Remove(serial);
-                return shouldConceal;
+                if (remove) _corpsesRequested.Remove(serial);
+                return true;
             }
 
             return false;
