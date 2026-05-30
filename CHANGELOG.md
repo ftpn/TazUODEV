@@ -3,6 +3,47 @@ All notable changes to TazUO will be recorded here.
 
 ---
 
+
+## V5.2.0
+
+### Features
+* Automatic loading of system fonts - [P.R 444](https://github.com/PlayTazUO/TazUO/pull/444) ([yuval-po](https://github.com/yuval-po) & [bittiez](https://github.com/bittiez))
+* Added Timer APIs to Legion - [P.R 457](https://github.com/PlayTazUO/TazUO/pull/457) ([yuval-po](https://github.com/yuval-po))
+
+### Misc
+* Added a few fixes to music filter system - ([bittiez](https://github.com/bittiez))
+* Added option to set current macros as default for new characters - ([bittiez](https://github.com/bittiez))
+* Added option to override all other character macros with current characters - ([bittiez](https://github.com/bittiez))
+* Updated some default profile settings - ([bittiez](https://github.com/bittiez))
+* * Lowered music volume defaults
+* * Changed default auto follow distance to 1
+* * Enabled ctrl scroll to zoom by default
+* * Enabled spell format by default
+* * Nameplates only show in warmode is now false
+* * Increased overhead chat width to 400(Up from 200)
+* * Disable dismount in warmode now on by default
+* Updated TazUO User and Channel areas to not stretch the entire screen when full - ([bittiez](https://github.com/bittiez))
+* Split stack gump now accepts spacebar in addition to enter to accept the amount - ([bittiez](https://github.com/bittiez))
+* Removed anonymous metrics - ([bittiez](https://github.com/bittiez))
+* Removed TazUO Chat - ([bittiez](https://github.com/bittiez))
+* Running Scripts window can now effectivley make use of allocated space via wrapping -  [P.R 460](https://github.com/PlayTazUO/TazUO/pull/460) ([yuval-po](https://github.com/yuval-po))
+
+### Fixes
+* Fix for latest UO Publish causing a crash in animation loading - ([bittiez](https://github.com/bittiez))
+* SOS Gump ID now supports entering id as both hex and int(0x0000, or 0000 directly) - ([bittiez](https://github.com/bittiez))
+* Fixed a rare crash that could occur when receiving chat messages during login/logout - [P.R 455](https://github.com/PlayTazUO/TazUO/pull/455) ([yuval-po](https://github.com/yuval-po))
+* Fixed a rare crash that could occur during login due to a concurrent gump modification - [P.R 456](https://github.com/PlayTazUO/TazUO/pull/456) ([yuval-po](https://github.com/yuval-po))
+* Fixed a crash that occurred when clicking an empty `Combobox` - [P.R 451](https://github.com/PlayTazUO/TazUO/pull/451) ([yuval-po](https://github.com/yuval-po))
+* Dramatically reduced memory footprint and load times for system fonts - [P.R 446](https://github.com/PlayTazUO/TazUO/pull/446) ([yuval-po](https://github.com/yuval-po))
+* Eventine-specific paperdoll layer ordering - [P.R 458](https://github.com/PlayTazUO/TazUO/pull/458) ([yuval-po](https://github.com/yuval-po))
+* Crash when using the Plugin API's UsePrimaryAbility/UseSecondaryAbility methods - [P.R 461](https://github.com/PlayTazUO/TazUO/pull/461) ([yuval-po](https://github.com/yuval-po))
+* HTML control text dispalyed in GridLootGump name label in UO POL based servers - [P.R 462](https://github.com/PlayTazUO/TazUO/pull/462) ([yuval-po](https://github.com/yuval-po) & [bittiez](https://github.com/bittiez))
+* Spell progress indicator never shows - [P.R 464](https://github.com/PlayTazUO/TazUO/pull/464) ([yuval-po](https://github.com/yuval-po))
+* Allow deletion of individual pieces of house stairs - [P.R 466](https://github.com/PlayTazUO/TazUO/pull/466) ([yuval-po](https://github.com/yuval-po))
+* Add missing Shirt and Kilt slot to paperdoll - [P.R 467](https://github.com/PlayTazUO/TazUO/pull/467) ([yuval-po](https://github.com/yuval-po))
+* Two Modern Paperdoll issues (closure and context menus) - [P.R 468](https://github.com/PlayTazUO/TazUO/pull/468) ([yuval-po](https://github.com/yuval-po))
+* Allow resetting of outline color via the SetOutlineColor API - [P.R 471](https://github.com/PlayTazUO/TazUO/pull/471) ([yuval-po](https://github.com/yuval-po))
+
 ## V5.1.0
 
 ### Assistant

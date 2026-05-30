@@ -268,8 +268,6 @@ namespace ClassicUO.Network
             {
                 AsyncNetClient.Socket.Send_SelectCharacter(index, Characters[index], AsyncNetClient.Socket.LocalIP);
                 SetLoginStep(LoginSteps.EnteringBritania);
-                if(!LastServerName.Contains(Account) && !LastServerName.Contains(Password))
-                    AnonMetrics.TrackLoginFireAndForget(LastServerName);
             }
             else
             {
@@ -310,7 +308,7 @@ namespace ClassicUO.Network
 
         private void OnNetClientConnected(object sender, EventArgs e)
         {
-            Log.Info("[HandShake] Connected!");
+            Log.Info("Connected!");
             SetLoginStep(LoginSteps.VerifyingAccount);
 
             uint address = AsyncNetClient.Socket.LocalIP;

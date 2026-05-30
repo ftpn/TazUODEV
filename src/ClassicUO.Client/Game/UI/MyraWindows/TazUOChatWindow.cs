@@ -154,9 +154,9 @@ public class TazUOChatWindow : MyraControl
         _messagesPanel = new VerticalStackPanel { Spacing = 1 };
         _usersPanel    = new VerticalStackPanel { Spacing = 1 };
 
-        var channelScroll = new ScrollViewer { MinHeight = PANEL_HEIGHT, Content = _channelsPanel};
+        var channelScroll = new ScrollViewer { Height = PANEL_HEIGHT, Content = _channelsPanel};
         _messageScroll    = new ScrollViewer { Width = MSG_WIDTH, MinHeight = PANEL_HEIGHT, Content = _messagesPanel, Border = new SolidBrush(new Color(0, 0, 0, MyraStyle.STANDARD_BORDER_ALPHA)), BorderThickness = new Thickness(1)  };
-        var userScroll    = new ScrollViewer { MinHeight = PANEL_HEIGHT, Content = _usersPanel  };
+        var userScroll    = new ScrollViewer { Height = PANEL_HEIGHT, Content = _usersPanel  };
 
         var row = new HorizontalStackPanel { Spacing = 3 };
         row.Widgets.Add(channelScroll);

@@ -20,6 +20,8 @@ using SDL3;
 using System;
 using System.Collections.Generic;
 using System.Net.Sockets;
+using ClassicUO.Common;
+using ClassicUO.Game.Managers.SpellVisualRange;
 using ClassicUO.Game.Map;
 using ClassicUO.Game.UI.Gumps.GridHighLight;
 using ClassicUO.LegionScripting;
@@ -63,7 +65,7 @@ namespace ClassicUO.Game.Scenes
         private bool _forceStopScene;
         private HealthLinesManager _healthLinesManager;
 
-        private Point _lastSelectedMultiPositionInHouseCustomization;
+        private Point3D _lastSelectedMultiPositionInHouseCustomization;
         private int _lightCount;
         private readonly LightData[] _lights = new LightData[
             LightsLoader.MAX_LIGHTS_DATA_INDEX_COUNT
@@ -229,8 +231,8 @@ namespace ClassicUO.Game.Scenes
             if(ProfileManager.CurrentProfile.EnableCaveBorder)
                 StaticFilters.ApplyCaveTileBorder();
 
-            if(!ProfileManager.CurrentProfile.DisableConnectToIrcOnLogin)
-                TazUOChatManager.Instance.Init();
+            // if(!ProfileManager.CurrentProfile.DisableConnectToIrcOnLogin)
+            //     TazUOChatManager.Instance.Init();
 
             if (ProfileManager.CurrentProfile.VoiceRecognitionEnabled)
                 VoiceRecognitionManager.Instance.InitializeAsync(ProfileManager.CurrentProfile.VoiceModelPath, startListeningAfter: true);
@@ -258,41 +260,18 @@ namespace ClassicUO.Game.Scenes
                 case MessageType.Limit3Spell:
 
                     if (e.Parent == null || !SerialHelper.IsValid(e.Parent.Serial))
-                    {
-                        if (ProfileManager.CurrentProfile.HideJournalSystemPrefix)
-                        {
-                            name = null;
-                        }
-                        else
-                        {
-                            name = ResGeneral.System;
-                        }
-                    }
+                        name = ProfileManager.CurrentProfile?.HideJournalSystemPrefix == true ? null : ResGeneral.System;
                     else
-                    {
                         name = e.Name;
-                    }
 
                     text = e.Text;
-
                     break;
 
                 case MessageType.System:
                     if (string.IsNullOrEmpty(e.Name) || string.Equals(e.Name, "system", StringComparison.InvariantCultureIgnoreCase))
-                    {
-                        if (ProfileManager.CurrentProfile.HideJournalSystemPrefix)
-                        {
-                            name = null;
-                        }
-                        else
-                        {
-                            name = ResGeneral.System;
-                        }
-                    }
+                        name = ProfileManager.CurrentProfile?.HideJournalSystemPrefix == true ? null : ResGeneral.System;
                     else
-                    {
                         name = e.Name;
-                    }
 
                     text = e.Text;
 
@@ -1095,37 +1074,55 @@ namespace ClassicUO.Game.Scenes
             }
 
             if (_isMouseLeftDown && !Client.Game.UO.GameCursor.ItemHold.Enabled)
+                UpdateWhenLeftClickHeld();
+        }
+
+        /// <summary>
+        /// Handles updates performed when the left mouse button is held.
+        /// This method manages interactions with game objects while the left mouse button is being held down,
+        /// including custom house modifications and item pickup behaviors.
+        /// </summary>
+        /// <remarks>
+        /// - In the context of custom house building, it processes object selection and placement in real-time.
+        /// - Prevents repeated interactions on the same object or position to avoid duplicate actions.
+        /// - Implements a delay mechanism for placing objects in house customization for better user experience.
+        /// - Handles item pickup if an item is selected under specific conditions.
+        /// </remarks>
+        private void UpdateWhenLeftClickHeld()
+        {
+            if (
+                _world.CustomHouseManager != null
+                && _world.CustomHouseManager.SelectedGraphic != 0
+                && !_world.CustomHouseManager.SeekTile
+                && !_world.CustomHouseManager.Erasing
+                && Time.Ticks > _timeToPlaceMultiInHouseCustomization
+            )
             {
-                if (
-                    _world.CustomHouseManager != null
-                    && _world.CustomHouseManager.SelectedGraphic != 0
-                    && !_world.CustomHouseManager.SeekTile
-                    && !_world.CustomHouseManager.Erasing
-                    && Time.Ticks > _timeToPlaceMultiInHouseCustomization
-                )
-                {
-                    if (
-                        SelectedObject.Object is GameObject obj
-                        && (
-                            obj.X != _lastSelectedMultiPositionInHouseCustomization.X
-                            || obj.Y != _lastSelectedMultiPositionInHouseCustomization.Y
-                        )
-                    )
-                    {
-                        _world.CustomHouseManager.OnTargetWorld(obj);
-                        _timeToPlaceMultiInHouseCustomization = Time.Ticks + 50;
-                        _lastSelectedMultiPositionInHouseCustomization.X = obj.X;
-                        _lastSelectedMultiPositionInHouseCustomization.Y = obj.Y;
-                    }
-                }
-                else if (Time.Ticks - _holdMouse2secOverItemTime >= 1000)
-                {
-                    if (SelectedObject.Object is Item it && GameActions.PickUp(_world, it.Serial, 0, 0))
-                    {
-                        _isMouseLeftDown = false;
-                        _holdMouse2secOverItemTime = 0;
-                    }
-                }
+                // Null/Type guard
+                if (SelectedObject.Object is not GameObject obj)
+                    return;
+
+                // Guard against multiple clicks to on the exact same entity
+                if (obj.X == _lastSelectedMultiPositionInHouseCustomization.X &&
+                    obj.Y == _lastSelectedMultiPositionInHouseCustomization.Y &&
+                    obj.Z == _lastSelectedMultiPositionInHouseCustomization.Z
+                   )
+                    return;
+
+                _world.CustomHouseManager.OnTargetWorld(obj);
+                _timeToPlaceMultiInHouseCustomization = Time.Ticks + 50;
+                _lastSelectedMultiPositionInHouseCustomization.X = obj.X;
+                _lastSelectedMultiPositionInHouseCustomization.Y = obj.Y;
+                return;
+            }
+
+            if (Time.Ticks - _holdMouse2secOverItemTime < 1000)
+                return;
+
+            if (SelectedObject.Object is Item it && GameActions.PickUp(_world, it.Serial, 0, 0))
+            {
+                _isMouseLeftDown = false;
+                _holdMouse2secOverItemTime = 0;
             }
         }
 

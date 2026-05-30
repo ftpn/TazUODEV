@@ -42,6 +42,8 @@ public class TazUOChatManager
 
     public void Init()
     {
+        return; //System disabled
+
         if (IsConnected) return;
 
         if (_client != null)

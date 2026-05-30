@@ -233,7 +233,7 @@ namespace ClassicUO.Game.Managers
             }
         }
 
-        public void PlayMusic(int music, bool iswarmode = false, bool is_login = false)
+        public void PlayMusic(int music, bool iswarmode = false, bool is_login = false, bool skipIgnore = false)
         {
             if (!_canReproduceAudio || _audioDeviceDisconnected)
             {
@@ -245,7 +245,7 @@ namespace ClassicUO.Game.Managers
                 return;
             }
 
-            if (SoundFilterManager.Instance.IsSoundFiltered(music, true))
+            if (!skipIgnore && SoundFilterManager.Instance.IsSoundFiltered(music, true))
             {
                 return;
             }

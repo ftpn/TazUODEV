@@ -109,12 +109,13 @@ namespace ClassicUO.Game.UI.Gumps
 
         public override void Dispose()
         {
+            if (IsDisposed)
+                return;
+
             Item it = World.Items.Get(LocalSerial);
 
             if (it != null && it.Opened)
-            {
                 it.Opened = false;
-            }
 
             base.Dispose();
         }

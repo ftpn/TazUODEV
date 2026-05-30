@@ -587,10 +587,13 @@ namespace ClassicUO.Configuration
                 "You have {0} other profiles that will may overridden with the settings in this profile.\n\n" +
                 "This will not override: Macros, skill groups, info bar, grid container data, or gump saved positions.";
             public string OverrideAll { get; set; } = "Override {0} other profiles with this one.";
+            public string OverrideAllMacros { get; set; } = "Override {0} other profile's macros with this one.";
             public string OverrideSuccess { get; set; } = "{0} profiles overriden.";
             public string OverrideSame { get; set; } = "Override {0} other profiles on this same server with this one.";
             public string SetAsDefault { get; set; } = "Set this profile as the default for new characters.";
+            public string SetMacrosAsDefault { get; set; } = "Set this profile's macros as the default for new characters.";
             public string SetAsDefaultSuccess { get; set; } = "This profile is now the default for new characters.";
+            public string SetMacrosAsDefaultSuccess { get; set; } = "This profile's macros are now the default for new characters.";
 
             #endregion
 

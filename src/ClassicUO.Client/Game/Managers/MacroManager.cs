@@ -103,12 +103,13 @@ namespace ClassicUO.Game.Managers
             }
         }
 
-        public void Save()
+        public void Save(string? path = null)
         {
             List<Macro> list = GetAllMacros();
 
             string tempPath = Path.GetTempFileName();
-            string path = Path.Combine(ProfileManager.ProfilePath, "macros.xml");
+
+            path ??= Path.Combine(ProfileManager.ProfilePath, "macros.xml");
 
             if (!File.Exists(tempPath))
             {
@@ -233,6 +234,8 @@ namespace ClassicUO.Game.Managers
 
         private void CreateDefaultMacros()
         {
+            if (LoadFromDefaultMacroSave()) return;
+
             PushToBack
             (
                 new Macro
@@ -336,6 +339,40 @@ namespace ClassicUO.Game.Managers
             );
         }
 
+        private bool LoadFromDefaultMacroSave()
+        {
+            string defaultMacroXmlPath = Path.Combine(ProfileManager.RootPath, "macros.xml");
+
+            if (!Path.Exists(defaultMacroXmlPath)) return false;
+
+            var doc = new XmlDocument();
+
+            try
+            {
+                doc.Load(defaultMacroXmlPath);
+                Clear();
+
+                XmlElement root = doc["macros"];
+
+                if (root != null)
+                {
+                    foreach (XmlElement xml in root.GetElementsByTagName("macro"))
+                    {
+                        var macro = new Macro(xml.GetAttribute("name"));
+                        macro.Load(xml);
+                        PushToBack(macro);
+                    }
+
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex.ToString());
+            }
+
+            return false;
+        }
 
         public List<Macro> GetAllMacros()
         {

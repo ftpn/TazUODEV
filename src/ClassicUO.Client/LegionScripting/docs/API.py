@@ -40,12 +40,13 @@ class ApiGameObject:
     IsDestroyed: bool = None
     __class__: str = None
 
-    def SetOutlineColor(self, htmlColor: "str") -> None:
+    def SetOutlineColor(self, htmlColor: "str" = None) -> None:
         """
-         Set an objects outline color using html hex colors.
+         Set an object's outline color using HTML hex colors.
          Example:
          ```py
          API.Player.SetOutlineColor("#105510")
+         API.Player.SetOutlineColor(None)
          ```
         
         """
@@ -77,7 +78,7 @@ class ApiGameObject:
     def __repr__(self) -> "str":
         """
          Returns a detailed string representation of the object.
-         This string is used by Python’s built-in <c>repr()</c> function.
+         This string is used by Python’s built-in `repr()` function.
         
         """
         pass
@@ -885,7 +886,7 @@ class ApiUiMenuItem:
     def __repr__(self) -> "str":
         """
          Returns a detailed string representation of the object.
-         This string is used by Python’s built-in <c>repr()</c> function.
+         This string is used by Python’s built-in `repr()` function.
         
         """
         pass
@@ -1149,6 +1150,22 @@ def OnHotKey(key: "str", callback: "Any" = None) -> None:
      ```
      The <paramref name="key"/> can include modifiers (CTRL, SHIFT, ALT),
      for example: "CTRL+SHIFT+F1" or "ALT+A".
+    
+    """
+    pass
+
+def ScheduleTimedCallback(delayMs: "int", callback: "Any", timesToRepeat: "int" = -1) -> "int":
+    """
+     Schedules a callback to be invoked after a specified delay.
+    
+     Note that as with keyboard hotkeys, you must call `ProcessCallbacks` for the callback to actually be run.
+    
+    """
+    pass
+
+def RemoveTimedCallback(id: "int") -> None:
+    """
+     Removes a previously scheduled timed callback
     
     """
     pass
@@ -1600,7 +1617,7 @@ def Msg(message: "str") -> None:
      Say a message outloud.
      Example:
      ```py
-     API.Say("Hello friend!")
+     API.Msg("Hello friend!")
      ```
     
     """
@@ -2069,7 +2086,7 @@ def RequestTarget(timeout: "float" = 5) -> "int":
 
 def RequestAnyTarget(timeout: "float" = 5) -> "ApiGameObject":
     """
-     Prompts the player to target any object in the game world, including an <c>Item</c> , <c>Mobile</c> , <c>Land</c> tile, <c>Static</c> , or <c>Multi</c> .
+     Prompts the player to target any object in the game world, including an `Item` , `Mobile` , `Land` tile, `Static` , or `Multi` .
      Waits for the player to select a target within a given timeout period.
     
     """

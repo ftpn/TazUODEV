@@ -64,7 +64,7 @@ description:  Base class for all Python-accessible game world objects.  Encapsul
 **Type:** `string`
 
  The Python-visible class name of this object.
- Accessible in Python as <c>obj.__class__</c> .
+ Accessible in Python as `obj.__class__` .
 
 
 
@@ -75,10 +75,11 @@ description:  Base class for all Python-accessible game world objects.  Encapsul
 ## Methods
 ### SetOutlineColor
 `(htmlColor)`
- Set an objects outline color using html hex colors.
+ Set an object's outline color using HTML hex colors.
  Example:
  ```py
  API.Player.SetOutlineColor("#105510")
+ API.Player.SetOutlineColor(None)
  ```
 
 
@@ -86,7 +87,7 @@ description:  Base class for all Python-accessible game world objects.  Encapsul
 
 | Name | Type | Optional | Description |
 | --- | --- | --- | --- |
-| `htmlColor` | `string` | ❌ No |  |
+| `htmlColor` | `string` | ✅ Yes | The color to set. Pass `null` to remove the outline. |
 
 **Return Type:** `void` *(Does not return anything)*
 
@@ -136,7 +137,7 @@ description:  Base class for all Python-accessible game world objects.  Encapsul
 ### __repr__
 
  Returns a detailed string representation of the object.
- This string is used by Python’s built-in <c>repr()</c> function.
+ This string is used by Python’s built-in `repr()` function.
 
 
 **Return Type:** `string`

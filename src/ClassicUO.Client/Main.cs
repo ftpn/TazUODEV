@@ -545,12 +545,6 @@ namespace ClassicUO
                         ZLib.SetForceManagedZlib(true);
 
                         break;
-
-                    case "nometrics":
-                        AnonMetrics.MetricsEnabled = false;
-                        Log.Info("Anonymous metrics disabled");
-
-                        break;
                 }
             }
         }
